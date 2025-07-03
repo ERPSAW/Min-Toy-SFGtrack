@@ -3,10 +3,8 @@ from frappe.utils import today
 from frappe.defaults import get_defaults
 from erpnext.stock.report.stock_balance.stock_balance import execute as execute_stock_balance
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist()
 def get_stock(item_code, item_group):
-    frappe.set_user('Administrator')
-
     item_data = {
         'total_qty': 0,
         'description': {}
