@@ -20,7 +20,7 @@ def get_stock(item_code, item_group):
             "from_date": today(),
             "to_date": today(),
             "item_group": item_group,
-            "item_code": item.name,
+            "item_code": [item.name],
             "warehouse": None,
             "warehouse_type": None,
             "valuation_field_type": "Currency",
