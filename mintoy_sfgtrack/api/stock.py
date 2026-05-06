@@ -36,3 +36,33 @@ def get_stock(item_code, item_group):
             item_data['total_qty'] += d["bal_qty"]
 
     return item_data
+
+
+@frappe.whitelist()
+def get_sales_invoice_items(item_code, item_group, from_date, to_date):
+    conditions = "sii.docstatus = 1 AND sii.custom_dispatched_box_qty IS NOT NULL AND posting_date BETWEEN '{from_date}' AND '{to_date}'"
+
+    if item_code:
+        conditions += f" AND sii.item_code like '{item_code}%'"
+    if item_group:
+        conditions += f" AND sii.item_group = '{item_group}'"
+
+    query = f"""
+        SELECT
+            sii.item_code,
+            sii.item_name,
+            SUM(
+                CAST(
+                    SUBSTRING_INDEX(sii.custom_dispatched_box_qty, ' ', 1)
+                    AS DECIMAL(10,2)
+                )
+            ) AS total_qty
+        FROM
+            `tabSales Invoice Item` sii
+        WHERE
+            {conditions}
+        GROUP BY
+            sii.item_code, sii.item_name;
+    """
+
+    return frappe.db.sql(query, {"from_date": from_date, "to_date": to_date}, as_dict=True)
