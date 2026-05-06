@@ -40,7 +40,7 @@ def get_stock(item_code, item_group):
 
 @frappe.whitelist()
 def get_sales_invoice_items(item_code, item_group, from_date, to_date):
-    conditions = "sii.docstatus = 1 AND sii.custom_dispatched_box_qty IS NOT NULL AND posting_date BETWEEN '{from_date}' AND '{to_date}'"
+    conditions = "sii.docstatus = 1 AND sii.custom_dispatched_box_qty IS NOT NULL AND si.posting_date BETWEEN '{from_date}' AND '{to_date}'"
 
     if item_code:
         conditions += f" AND sii.item_code like '{item_code}%'"
@@ -59,6 +59,8 @@ def get_sales_invoice_items(item_code, item_group, from_date, to_date):
             ) AS total_qty
         FROM
             `tabSales Invoice Item` sii
+        LEFT JOIN
+            `tabSales Invoice` as si on si.name = sii.parent
         WHERE
             {conditions}
         GROUP BY
