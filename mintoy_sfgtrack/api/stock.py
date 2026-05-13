@@ -39,13 +39,26 @@ def get_stock(item_code, item_group):
 
 
 @frappe.whitelist()
-def get_sales_invoice_items(item_code, from_date, to_date, item_group = None):
-    conditions = "sii.docstatus = 1 AND sii.custom_dispatched_box_qty IS NOT NULL AND si.posting_date BETWEEN '{from_date}' AND '{to_date}'"
+def get_sales_invoice_items(item_code=None, from_date=None, to_date=None, item_group=None):
+
+    conditions = [
+        "si.docstatus = 1",
+        "sii.custom_dispatched_box_qty IS NOT NULL",
+        "si.posting_date BETWEEN %(from_date)s AND %(to_date)s"
+    ]
+
+    filters = {
+        "from_date": from_date,
+        "to_date": to_date
+    }
 
     if item_code:
-        conditions += f" AND sii.item_code like '{item_code}%'"
+        conditions.append("sii.item_code LIKE %(item_code)s")
+        filters["item_code"] = f"{item_code}%"
+
     if item_group:
-        conditions += f" AND sii.item_group = '{item_group}'"
+        conditions.append("sii.item_group = %(item_group)s")
+        filters["item_group"] = item_group
 
     query = f"""
         SELECT
@@ -53,18 +66,23 @@ def get_sales_invoice_items(item_code, from_date, to_date, item_group = None):
             sii.item_name,
             SUM(
                 CAST(
-                    SUBSTRING_INDEX(sii.custom_dispatched_box_qty, ' ', 1)
-                    AS DECIMAL(10,2)
+                    SUBSTRING_INDEX(
+                        sii.custom_dispatched_box_qty,
+                        ' ',
+                        1
+                    ) AS DECIMAL(10,2)
                 )
             ) AS total_qty
         FROM
-            `tabSales Invoice Item` sii
+            `tabSales Invoice Item` AS sii
         LEFT JOIN
-            `tabSales Invoice` as si on si.name = sii.parent
+            `tabSales Invoice` AS si
+            ON si.name = sii.parent
         WHERE
-            {conditions}
+            {" AND ".join(conditions)}
         GROUP BY
-            sii.item_code, sii.item_name;
+            sii.item_code,
+            sii.item_name
     """
 
-    return frappe.db.sql(query, {"from_date": from_date, "to_date": to_date}, as_dict=True)
+    return frappe.db.sql(query, filters, as_dict=True)
