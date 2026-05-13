@@ -39,7 +39,7 @@ def get_stock(item_code, item_group):
 
 
 @frappe.whitelist()
-def get_sales_invoice_items(item_code, item_group, from_date, to_date):
+def get_sales_invoice_items(item_code, from_date, to_date, item_group = None):
     conditions = "sii.docstatus = 1 AND sii.custom_dispatched_box_qty IS NOT NULL AND si.posting_date BETWEEN '{from_date}' AND '{to_date}'"
 
     if item_code:
